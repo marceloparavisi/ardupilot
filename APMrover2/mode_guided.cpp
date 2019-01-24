@@ -79,6 +79,28 @@ void ModeGuided::update()
             }
             break;
         }
+        case Guided_PWMvalues:
+		{
+			g2.motors.set_raw_pwm(1,_pwm_ch1);
+			g2.motors.set_raw_pwm(2,_pwm_ch2);
+			g2.motors.set_raw_pwm(3,_pwm_ch3);
+			g2.motors.set_raw_pwm(4,_pwm_ch4);
+			_reached_destination = false;
+
+			/*uint16_t output_pwm1;
+			output_pwm1 = SRV_Channels::output_ch(1);
+			uint16_t output_pwm3;
+			output_pwm3 = SRV_Channels::output_ch(3);
+			gcs().send_text(MAV_SEVERITY_CRITICAL,"channel 1 and 3 pwm %d %d", output_pwm1, output_pwm3);
+*/
+			/*for (uint8_t i =0; i< NUM_SERVO_CHANNELS; i++)
+			{
+				uint16_t output_pwm;
+				output_pwm = SRV_Channels::output_ch(i);
+				 gcs().send_text(MAV_SEVERITY_CRITICAL,"channel %d pwm %d", i, output_pwm);
+			}//*/
+			break;
+		}
 
         default:
             gcs().send_text(MAV_SEVERITY_WARNING, "Unknown GUIDED mode");
@@ -152,3 +174,18 @@ void ModeGuided::set_desired_turn_rate_and_speed(float turn_rate_cds, float targ
     // log new target
     rover.Log_Write_GuidedTarget(_guided_mode, Vector3f(_desired_yaw_rate_cds, 0.0f, 0.0f), Vector3f(_desired_speed, 0.0f, 0.0f));
 }
+
+void ModeGuided::set_desired_pwm_value(int channel, float pwm)
+{
+	_guided_mode = ModeGuided::Guided_PWMvalues;
+	if (channel == 1)
+		_pwm_ch1=pwm;
+	if (channel == 2)
+		_pwm_ch2=pwm;
+	if (channel == 3)
+		_pwm_ch3=pwm;
+	if (channel == 4)
+		_pwm_ch4=pwm;
+
+}
+

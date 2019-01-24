@@ -53,6 +53,7 @@ void SRV_Channel::output_ch(void)
     if (!(SRV_Channels::disabled_mask & (1U<<ch_num))) {
         hal.rcout->write(ch_num, output_pwm);
     }
+    //gcs().send_text(MAV_SEVERITY_CRITICAL,"srv channel pwm: %d", output_pwm);
 }
 
 /*
@@ -61,8 +62,19 @@ void SRV_Channel::output_ch(void)
 void SRV_Channels::output_ch_all(void)
 {
     for (uint8_t i = 0; i < NUM_SERVO_CHANNELS; i++) {
+    	//gcs().send_text(MAV_SEVERITY_CRITICAL,"srv channel: %d", i);
         channels[i].output_ch();
     }
+}
+
+uint16_t SRV_Channels::output_ch(uint8_t i)
+{
+	if (i < NUM_SERVO_CHANNELS)
+	{
+		channels[i].output_ch();
+		return channels[i].output_pwm;
+	}
+	return 0;
 }
 
 /*

@@ -94,6 +94,7 @@ AP_MotorsUGV::AP_MotorsUGV(AP_ServoRelayEvents &relayEvents) :
         _relayEvents(relayEvents)
 {
     AP_Param::setup_object_defaults(this, var_info);
+    _raw_pwm=false;
 }
 
 void AP_MotorsUGV::init()
@@ -139,7 +140,7 @@ void AP_MotorsUGV::setup_safety_output()
 // setup servo output ranges
 void AP_MotorsUGV::setup_servo_output()
 {
-    // k_steering are limited to -45;45 degree
+    // k_	 are limited to -45;45 degree
     SRV_Channels::set_angle(SRV_Channel::k_steering, SERVO_MAX);
 
     // k_throttle are in power percent so -100 ... 100
@@ -182,10 +183,11 @@ bool AP_MotorsUGV::have_skid_steering() const
 
 void AP_MotorsUGV::output(bool armed, float dt)
 {
+
     // soft-armed overrides passed in armed status
     if (!hal.util->get_soft_armed()) {
         armed = false;
-        _throttle = 0.0f;
+        //_throttle = 0.0f;
     }
 
     // sanity check parameters
@@ -203,11 +205,19 @@ void AP_MotorsUGV::output(bool armed, float dt)
     // output for skid steering style frames
     output_skid_steering(armed, _steering, _throttle);
 
+    if (_raw_pwm)
+    	output_raw(armed);
+
     // send values to the PWM timers for output
     SRV_Channels::calc_pwm();
     SRV_Channels::cork();
     SRV_Channels::output_ch_all();
     SRV_Channels::push();
+    uint16_t output_pwm1;
+	output_pwm1 = SRV_Channels::output_ch(0);
+	uint16_t output_pwm3;
+	output_pwm3 = SRV_Channels::output_ch(2);
+	gcs().send_text(MAV_SEVERITY_CRITICAL,"channel 1 and 3 pwm %d %d", output_pwm1, output_pwm3);
 }
 
 // test steering or throttle output as a percentage of the total (range -100 to +100)
@@ -374,6 +384,7 @@ void AP_MotorsUGV::setup_pwm_type()
 // output to regular steering and throttle channels
 void AP_MotorsUGV::output_regular(bool armed, float steering, float throttle)
 {
+	//gcs().send_text(MAV_SEVERITY_CRITICAL,"output_regular steer:%f throttle %f throttle_base %f",steering, throttle,_vector_throttle_base);
     // output to throttle channels
     if (armed) {
         // vectored thrust handling
@@ -381,6 +392,7 @@ void AP_MotorsUGV::output_regular(bool armed, float steering, float throttle)
             // scale steering down linearly as throttle increases above _vector_throttle_base
             const float steering_scalar = constrain_float(_vector_throttle_base / fabsf(throttle), 0.0f, 1.0f);
             steering *= steering_scalar;
+            //gcs().send_text(MAV_SEVERITY_CRITICAL,"output_regular: steering: %f _vector_throttle_base %f",steering, _vector_throttle_base);
         }
         output_throttle(SRV_Channel::k_throttle, throttle);
     } else {
@@ -399,10 +411,12 @@ void AP_MotorsUGV::output_regular(bool armed, float steering, float throttle)
 // output to skid steering channels
 void AP_MotorsUGV::output_skid_steering(bool armed, float steering, float throttle)
 {
+
+
     if (!have_skid_steering()) {
         return;
     }
-
+    //gcs().send_text(MAV_SEVERITY_CRITICAL,"skid: steering: %f throttle %f",steering,throttle);
     // handle simpler disarmed case
     if (!armed) {
         if (_disarm_disable_pwm) {
@@ -414,10 +428,11 @@ void AP_MotorsUGV::output_skid_steering(bool armed, float steering, float thrott
         }
         return;
     }
-
     // skid steering mixer
     float steering_scaled = steering / 4500.0f; // steering scaled -1 to +1
     float throttle_scaled = throttle / 100.0f;  // throttle scaled -1 to +1
+
+   // gcs().send_text(MAV_SEVERITY_CRITICAL,"skid: steer_scld : %f throttle_scaled %f",steering_scaled,throttle_scaled);
 
     // apply constraints
     steering_scaled = constrain_float(steering_scaled, -1.0f, 1.0f);
@@ -436,7 +451,7 @@ void AP_MotorsUGV::output_skid_steering(bool armed, float steering, float thrott
     // add in throttle and steering
     const float motor_left = throttle_scaled + (steering_dir * steering_scaled);
     const float motor_right = throttle_scaled - (steering_dir * steering_scaled);
-
+    //gcs().send_text(MAV_SEVERITY_CRITICAL,"skid: left %f right %f",(100.0f*motor_left),(100.0f*motor_right));
     // send pwm value to each motor
     output_throttle(SRV_Channel::k_throttleLeft, 100.0f * motor_left);
     output_throttle(SRV_Channel::k_throttleRight, 100.0f * motor_right);
@@ -445,8 +460,10 @@ void AP_MotorsUGV::output_skid_steering(bool armed, float steering, float thrott
 // output throttle value to main throttle channel, left throttle or right throttle.  throttle should be scaled from -100 to 100
 void AP_MotorsUGV::output_throttle(SRV_Channel::Aux_servo_function_t function, float throttle)
 {
+	//gcs().send_text(MAV_SEVERITY_CRITICAL,"output_throttle: throttle %f function: %d",throttle, function);
     // sanity check servo function
     if (function != SRV_Channel::k_throttle && function != SRV_Channel::k_throttleLeft && function != SRV_Channel::k_throttleRight) {
+    	gcs().send_text(MAV_SEVERITY_CRITICAL,"output_throttle: sanity failed. check functions");
         return;
     }
 
@@ -547,4 +564,50 @@ float AP_MotorsUGV::get_scaled_throttle(float throttle) const
     const float sign = (throttle < 0.0f) ? -1.0f : 1.0f;
     const float throttle_pct = constrain_float(throttle, -100.0f, 100.0f) / 100.0f;
     return 100.0f * sign * ((_thrust_curve_expo - 1.0f) + safe_sqrt((1.0f - _thrust_curve_expo) * (1.0f - _thrust_curve_expo) + 4.0f * _thrust_curve_expo * fabsf(throttle_pct))) / (2.0f * _thrust_curve_expo);
+}
+
+
+void AP_MotorsUGV::set_raw_pwm(int channel, float pwm)
+{
+	_raw_pwm=true;
+	if (channel == 1)
+		_pwm_ch1=pwm;
+	if (channel == 2)
+		_pwm_ch2=pwm;
+	if (channel == 3)
+		_pwm_ch3=pwm;
+	if (channel == 4)
+		_pwm_ch4=pwm;
+}
+
+
+void AP_MotorsUGV::output_raw(bool armed)
+{
+	if (!armed)
+	{
+		_pwm_ch1=0;
+		_pwm_ch2=0;
+		_pwm_ch3=0;
+		_pwm_ch4=0;
+	}
+
+    if (SRV_Channels::function_assigned(SRV_Channel::k_throttleLeft) &&
+        SRV_Channels::function_assigned(SRV_Channel::k_throttleRight))
+    {
+    	output_throttle(SRV_Channel::k_throttleLeft, _pwm_ch2);
+    	output_throttle(SRV_Channel::k_throttleRight, _pwm_ch4);
+    	gcs().send_text(MAV_SEVERITY_CRITICAL,"raw: left %f right %f",_pwm_ch2,_pwm_ch4);
+    }
+
+    if (SRV_Channels::function_assigned(SRV_Channel::k_throttle) &&
+        SRV_Channels::function_assigned(SRV_Channel::k_steering))
+    {
+    	gcs().send_text(MAV_SEVERITY_CRITICAL,"raw: ch1 %f ch3 %f",_pwm_ch1,_pwm_ch3);
+//    	SRV_Channels::set_output_scaled(SRV_Channel::k_steering, _pwm_ch1);
+//		output_throttle(SRV_Channel::k_throttle, _pwm_ch3);
+    	SRV_Channels::set_output_pwm(SRV_Channel::k_steering, _pwm_ch1);
+    	SRV_Channels::set_output_pwm(SRV_Channel::k_throttle, _pwm_ch3);
+
+    }
+
 }

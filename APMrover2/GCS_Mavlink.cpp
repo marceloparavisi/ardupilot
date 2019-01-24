@@ -3,6 +3,7 @@
 #include "GCS_Mavlink.h"
 
 #include <AP_RangeFinder/RangeFinder_Backend.h>
+#include <stdio.h>
 
 MAV_TYPE GCS_MAVLINK_Rover::frame_type() const
 {
@@ -665,16 +666,19 @@ MAV_RESULT GCS_MAVLINK_Rover::_handle_command_preflight_calibration(const mavlin
 
 void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 {
+	printf("\n received msgid: %d", msg->msgid);
     switch (msg->msgid) {
 
     case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
         {
+        	printf(" MAVLINK_MSG_ID_REQUEST_DATA_STREAM");
             handle_request_data_stream(msg, true);
             break;
         }
 
     case MAVLINK_MSG_ID_COMMAND_INT: {
         // decode packet
+    	printf(" MAVLINK_MSG_ID_COMMAND_INT");
         mavlink_command_int_t packet;
         mavlink_msg_command_int_decode(msg, &packet);
         MAV_RESULT result = MAV_RESULT_UNSUPPORTED;
@@ -767,6 +771,7 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_COMMAND_LONG:
         {
+        	printf(" MAVLINK_MSG_ID_COMMAND_LONG");
             // decode
             mavlink_command_long_t packet;
             mavlink_msg_command_long_decode(msg, &packet);
@@ -827,20 +832,26 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_COMPONENT_ARM_DISARM:
+        	printf(" MAV_CMD_COMPONENT_ARM_DISARM %f", packet.param1);
             if (is_equal(packet.param1, 1.0f)) {
                 // run pre_arm_checks and arm_checks and display failures
                 if (rover.arm_motors(AP_Arming::MAVLINK)) {
+                	printf(" accepted");
                     result = MAV_RESULT_ACCEPTED;
                 } else {
+                	printf(" rejected1");
                     result = MAV_RESULT_FAILED;
                 }
             } else if (is_zero(packet.param1))  {
                 if (rover.disarm_motors()) {
+                	printf(" accepted");
                     result = MAV_RESULT_ACCEPTED;
                 } else {
+                	printf(" rejected2");
                     result = MAV_RESULT_FAILED;
                 }
             } else {
+            	printf(" unsupported");
                 result = MAV_RESULT_UNSUPPORTED;
             }
             break;
@@ -862,6 +873,7 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 
         case MAV_CMD_DO_SET_HOME:
         {
+        	printf(" MAV_CMD_DO_SET_HOME");
             // param1 : use current (1=use current location, 0=use specified location)
             // param5 : latitude
             // param6 : longitude
@@ -887,20 +899,45 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
             break;
         }
 
+        case MAV_CMD_DO_SET_SERVO:
+        {
+        	printf(" MAV_CMD_DO_SET_SERVO");
+        	// param1: servo number
+        	// param2: PWM (microseconds)
+
+        	if (rover.control_mode != &rover.mode_guided)
+        		break;
+
+
+        	rover.mode_guided.set_desired_pwm_value(packet.param1, packet.param2);
+
+			printf ("pwm: %f %f",packet.param1, packet.param2);
+        	result = MAV_RESULT_ACCEPTED;
+        	break;
+        }
+
         case MAV_CMD_NAV_SET_YAW_SPEED:
         {
+        	printf(" MAV_CMD_NAV_SET_YAW_SPEED");
             // param1 : yaw angle to adjust direction by in centidegress
             // param2 : Speed - normalized to 0 .. 1
 
             // exit if vehicle is not in Guided mode
-            if (rover.control_mode != &rover.mode_guided) {
+            if ((rover.control_mode != &rover.mode_guided)&&  (rover.control_mode != &rover.mode_manual)) {
                 break;
             }
 
             // send yaw change and target speed to guided mode controller
             const float speed_max = rover.control_mode->get_speed_default();
             const float target_speed = constrain_float(packet.param2 * speed_max, -speed_max, speed_max);
-            rover.mode_guided.set_desired_heading_delta_and_speed(packet.param1, target_speed);
+
+            if (rover.control_mode == &rover.mode_guided)
+            	rover.mode_guided.set_desired_heading_delta_and_speed(packet.param1, target_speed);
+            else
+            {
+            	printf("steer: %f throttle %f", packet.param1, target_speed);
+            	rover.mode_manual.set_desired_heading_and_speed(packet.param1, target_speed);
+            }
             result = MAV_RESULT_ACCEPTED;
             break;
         }
@@ -989,6 +1026,7 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_HEARTBEAT:
         {
+        	printf(" MAVLINK_MSG_ID_HEARTBEAT");
             // We keep track of the last time we received a heartbeat from our GCS for failsafe purposes
             if (msg->sysid != rover.g.sysid_my_gcs) {
                 break;
@@ -1033,6 +1071,7 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED:     // MAV ID: 84
         {
+        	printf(" MAVLINK_MSG_ID_SET_POSITION_TARGET_LOCAL_NED");
             // decode packet
             mavlink_set_position_target_local_ned_t packet;
             mavlink_msg_set_position_target_local_ned_decode(msg, &packet);
@@ -1268,7 +1307,7 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
             loc.alt = packet.alt/10;
             Vector3f vel(packet.vx, packet.vy, packet.vz);
             vel *= 0.01f;
-
+            set_mode
             gps.setHIL(0, AP_GPS::GPS_OK_FIX_3D,
                        packet.time_usec/1000,
                        loc, vel, 10, 0);

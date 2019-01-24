@@ -72,6 +72,10 @@ public:
     // var_info for holding Parameter information
     static const struct AP_Param::GroupInfo var_info[];
 
+    void set_raw_pwm(int channel, float pwm);
+    void enable_raw_pwm(){_raw_pwm=true;};
+    void disable_raw_pwm(){_raw_pwm=true;};
+
 protected:
 
     // sanity check parameters
@@ -85,6 +89,8 @@ protected:
 
     // output to skid steering channels
     void output_skid_steering(bool armed, float steering, float throttle);
+
+    void output_raw(bool armed);
 
     // output throttle (-100 ~ +100) to a throttle channel.  Sets relays if required
     void output_throttle(SRV_Channel::Aux_servo_function_t function, float throttle);
@@ -115,4 +121,10 @@ protected:
     float   _steering;  // requested steering as a value from -4500 to +4500
     float   _throttle;  // requested throttle as a value from -100 to 100
     float   _throttle_prev; // throttle input from previous iteration
+
+    bool    _raw_pwm;
+    float   _pwm_ch1;
+    float   _pwm_ch2;
+    float   _pwm_ch3;
+    float   _pwm_ch4;
 };
