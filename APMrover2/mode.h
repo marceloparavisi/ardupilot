@@ -160,6 +160,8 @@ protected:
     float _desired_speed_final; // desired speed in m/s when we reach the destination
     float _speed_error;         // ground speed error in m/s
     uint32_t last_steer_to_wp_ms;   // system time of last call to calc_steering_to_waypoint
+    uint8_t _ch_number;
+    uint16_t _ch_pwm;
 };
 
 
@@ -265,13 +267,15 @@ public:
     // set desired heading-delta, turn-rate and speed
     void set_desired_heading_delta_and_speed(float yaw_delta_cd, float target_speed);
     void set_desired_turn_rate_and_speed(float turn_rate_cds, float target_speed);
+    void set_desired_pwm_value(int channel, float pwm);
 
 protected:
 
     enum GuidedMode {
         Guided_WP,
         Guided_HeadingAndSpeed,
-        Guided_TurnRateAndSpeed
+        Guided_TurnRateAndSpeed,
+		Guided_PWMvalues
     };
 
     bool _enter() override;
@@ -282,6 +286,9 @@ protected:
     bool have_attitude_target;  // true if we have a valid attitude target
     uint32_t _des_att_time_ms;  // system time last call to set_desired_attitude was made (used for timeout)
     float _desired_yaw_rate_cds;// target turn rate centi-degrees per second
+
+    float _pwm_ch1;
+    float _pwm_ch3;
 };
 
 
@@ -321,6 +328,27 @@ public:
     // manual mode does not require position or velocity estimate
     bool requires_position() const override { return false; }
     bool requires_velocity() const override { return false; }
+};
+
+class ModeController : public Mode
+{
+public:
+
+    uint32_t mode_number() const override { return CONTROLLER; }
+    const char *name4() const override { return "CTRL"; }
+
+    // methods that affect movement of the vehicle in this mode
+    void update() override;
+
+    // attributes for mavlink system status reporting
+    bool has_manual_input() const override { return true; }
+    bool attitude_stabilized() const override { return false; }
+
+    // control mode does not require position or velocity estimate
+    bool requires_position() const override { return false; }
+    bool requires_velocity() const override { return false; }
+
+    void set_servo_pwm(uint8_t chan, uint16_t value) { _ch_number = chan; _ch_pwm = value;  }
 };
 
 

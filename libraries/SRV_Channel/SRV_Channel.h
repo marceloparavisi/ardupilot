@@ -292,6 +292,8 @@ public:
     // call output_ch() on all channels
     static void output_ch_all(void);
 
+    static uint16_t output_ch(uint8_t i);
+
     // setup output ESC scaling based on a channels MIN/MAX
     void set_esc_scaling_for(SRV_Channel::Aux_servo_function_t function);
 
