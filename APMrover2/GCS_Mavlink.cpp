@@ -667,6 +667,7 @@ MAV_RESULT GCS_MAVLINK_Rover::_handle_command_preflight_calibration(const mavlin
 void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 {
 	printf("\n received msgid: %d", msg->msgid);
+<<<<<<< HEAD
 	if (rover.control_mode == &rover.mode_guided)
 		printf(" guided ");
 	if (rover.control_mode == &rover.mode_initializing)
@@ -687,6 +688,8 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 			printf(" mode_rtl ");
 	if (rover.control_mode == &rover.mode_smartrtl)
 				printf(" mode_smartrtl ");
+=======
+>>>>>>> bcd0f6095473ec6eb783522d25bafba9411b3942
     switch (msg->msgid) {
 
     case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
@@ -931,8 +934,12 @@ void GCS_MAVLINK_Rover::handleMessage(mavlink_message_t* msg)
 
         	rover.mode_guided.set_desired_pwm_value(packet.param1, packet.param2);
 
+<<<<<<< HEAD
 			printf ("pwm: %d %f",packet.param1, packet.param2);
 
+=======
+			printf ("pwm: %f %f",packet.param1, packet.param2);
+>>>>>>> bcd0f6095473ec6eb783522d25bafba9411b3942
         	result = MAV_RESULT_ACCEPTED;
         	break;
         }

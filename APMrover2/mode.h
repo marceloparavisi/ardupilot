@@ -288,7 +288,9 @@ protected:
     float _desired_yaw_rate_cds;// target turn rate centi-degrees per second
 
     float _pwm_ch1;
+    float _pwm_ch2;
     float _pwm_ch3;
+    float _pwm_ch4;
 };
 
 

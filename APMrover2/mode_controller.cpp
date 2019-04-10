@@ -10,12 +10,15 @@ void ModeController::update()
 
 
     // send the pwm values to ground station
-    for (uint8_t i =0; i< NUM_SERVO_CHANNELS; i++)
+
+    /*for (uint8_t i =0; i< NUM_SERVO_CHANNELS; i++)
 	{
 		uint16_t output_pwm;
 		output_pwm = SRV_Channels::output_ch(i);
 		 gcs().send_text(MAV_SEVERITY_CRITICAL,"channel %d pwm %d", i, output_pwm);
-	}
+
+	
+	}*/
 
 
 

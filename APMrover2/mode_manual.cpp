@@ -14,11 +14,15 @@ void ModeManual::update()
     // mark us as in_reverse when using a negative throttle to stop AHRS getting off
     rover.set_reverse(is_negative(g2.motors.get_throttle()));
 /*
+
+    rover.set_reverse(is_negative(g2.motors.get_throttle()));
+
     desired_steering=_desired_yaw_cd;
     desired_throttle=_desired_speed*50.0f;
 
     g2.motors.set_steering(desired_steering);
     g2.motors.set_throttle(desired_throttle);
+
 //*/
 /*
     gcs().send_text(MAV_SEVERITY_CRITICAL,"mode manual: steering: %f",desired_steering);
