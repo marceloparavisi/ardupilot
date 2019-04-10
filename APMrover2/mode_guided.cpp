@@ -88,25 +88,6 @@ void ModeGuided::update()
 			g2.motors.set_raw_pwm(4,_pwm_ch4);
 			_reached_destination = false;
 
-			/*uint16_t output_pwm1;
-			output_pwm1 = SRV_Channels::output_ch(1);
-			uint16_t output_pwm3;
-			output_pwm3 = SRV_Channels::output_ch(3);
-			gcs().send_text(MAV_SEVERITY_CRITICAL,"channel 1 and 3 pwm %d %d", output_pwm1, output_pwm3);
-*/
-			/*for (uint8_t i =0; i< NUM_SERVO_CHANNELS; i++)
->>>>>>> bcd0f6095473ec6eb783522d25bafba9411b3942
-			{
-				uint16_t output_pwm;
-				output_pwm = SRV_Channels::output_ch(i);
-				 gcs().send_text(MAV_SEVERITY_CRITICAL,"channel %d pwm %d", i, output_pwm);
-<<<<<<< HEAD
-			}
-			g2.motors.set_steering(_pwm_ch1);
-			g2.motors.set_throttle(_pwm_ch3);
-			_reached_destination = false;
-=======
-			}//*/
 			break;
 		}
 
@@ -185,15 +166,8 @@ void ModeGuided::set_desired_turn_rate_and_speed(float turn_rate_cds, float targ
 
 void ModeGuided::set_desired_pwm_value(int channel, float pwm)
 {
-<<<<<<< HEAD
 	gcs().send_text(MAV_SEVERITY_WARNING, "setting to Guided_PWMvalues %d %f", channel, pwm);
 
-	_guided_mode = ModeGuided::Guided_PWMvalues;
-	if (channel == 1)
-		_pwm_ch1=pwm;
-	if (channel == 3)
-		_pwm_ch3=pwm;
-=======
 	_guided_mode = ModeGuided::Guided_PWMvalues;
 	if (channel == 1)
 		_pwm_ch1=pwm;
@@ -203,7 +177,5 @@ void ModeGuided::set_desired_pwm_value(int channel, float pwm)
 		_pwm_ch3=pwm;
 	if (channel == 4)
 		_pwm_ch4=pwm;
-
->>>>>>> bcd0f6095473ec6eb783522d25bafba9411b3942
 }
 
