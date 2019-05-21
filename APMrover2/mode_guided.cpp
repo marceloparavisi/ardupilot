@@ -12,6 +12,12 @@ bool ModeGuided::_enter()
     // guided mode never travels in reverse
     rover.set_reverse(false);
 
+	g2.motors.disable_raw_pwm();
+	_pwm_ch1 = 0;
+	_pwm_ch2 = 0;
+	_pwm_ch3 = 0;
+	_pwm_ch4 = 0;
+
     return true;
 }
 
@@ -167,7 +173,7 @@ void ModeGuided::set_desired_turn_rate_and_speed(float turn_rate_cds, float targ
 void ModeGuided::set_desired_pwm_value(int channel, float pwm)
 {
 	gcs().send_text(MAV_SEVERITY_WARNING, "setting to Guided_PWMvalues %d %f", channel, pwm);
-
+	g2.motors.enable_raw_pwm();
 	_guided_mode = ModeGuided::Guided_PWMvalues;
 	if (channel == 1)
 		_pwm_ch1=pwm;
@@ -178,4 +184,20 @@ void ModeGuided::set_desired_pwm_value(int channel, float pwm)
 	if (channel == 4)
 		_pwm_ch4=pwm;
 }
+
+
+void ModeGuided::_exit()
+{
+	gcs().send_text(MAV_SEVERITY_WARNING, "LEAVING MODE GUIDED!!!!");
+	gcs().send_text(MAV_SEVERITY_WARNING, "LEAVING MODE GUIDED!!!!");
+	gcs().send_text(MAV_SEVERITY_WARNING, "LEAVING MODE GUIDED!!!!");
+	gcs().send_text(MAV_SEVERITY_WARNING, "LEAVING MODE GUIDED!!!!");
+	gcs().send_text(MAV_SEVERITY_WARNING, "LEAVING MODE GUIDED!!!!");
+	g2.motors.disable_raw_pwm();
+	_pwm_ch1 = 0;
+	_pwm_ch2 = 0;
+	_pwm_ch3 = 0;
+	_pwm_ch4 = 0;
+}
+
 

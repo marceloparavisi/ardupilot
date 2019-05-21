@@ -271,6 +271,8 @@ public:
 
 protected:
 
+    void _exit() override;
+
     enum GuidedMode {
         Guided_WP,
         Guided_HeadingAndSpeed,

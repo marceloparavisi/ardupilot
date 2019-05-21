@@ -1,2 +1,2 @@
-rsync -avz build/navio2/bin/ardurover pi@navio.local:/home/pi
+rsync -avz build/navio2/bin/ardurover pi@boat2:/home/pi/marcelo
 

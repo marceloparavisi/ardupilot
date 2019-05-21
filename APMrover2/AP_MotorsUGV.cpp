@@ -213,11 +213,12 @@ void AP_MotorsUGV::output(bool armed, float dt)
     SRV_Channels::cork();
     SRV_Channels::output_ch_all();
     SRV_Channels::push();
-    uint16_t output_pwm1;
+/*    uint16_t output_pwm1;
 	output_pwm1 = SRV_Channels::output_ch(0);
 	uint16_t output_pwm3;
 	output_pwm3 = SRV_Channels::output_ch(2);
 	gcs().send_text(MAV_SEVERITY_CRITICAL,"channel 1 and 3 pwm %d %d", output_pwm1, output_pwm3);
+//*/
 }
 
 // test steering or throttle output as a percentage of the total (range -100 to +100)
@@ -570,7 +571,6 @@ float AP_MotorsUGV::get_scaled_throttle(float throttle) const
 
 void AP_MotorsUGV::set_raw_pwm(int channel, float pwm)
 {
-	_raw_pwm=true;
 	if (channel == 1)
 		_pwm_ch1=pwm;
 	if (channel == 2)
@@ -603,7 +603,7 @@ void AP_MotorsUGV::output_raw(bool armed)
     if (SRV_Channels::function_assigned(SRV_Channel::k_throttle) &&
         SRV_Channels::function_assigned(SRV_Channel::k_steering))
     {
-    	gcs().send_text(MAV_SEVERITY_CRITICAL,"raw: ch1 %f ch3 %f",_pwm_ch1,_pwm_ch3);
+//    	gcs().send_text(MAV_SEVERITY_CRITICAL,"%d raw: ch1 %f ch3 %f",_raw_pwm,_pwm_ch1,_pwm_ch3);
 //    	SRV_Channels::set_output_scaled(SRV_Channel::k_steering, _pwm_ch1);
 //		output_throttle(SRV_Channel::k_throttle, _pwm_ch3);
     	SRV_Channels::set_output_pwm(SRV_Channel::k_steering, _pwm_ch1);

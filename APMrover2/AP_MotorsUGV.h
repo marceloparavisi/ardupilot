@@ -74,7 +74,7 @@ public:
 
     void set_raw_pwm(int channel, float pwm);
     void enable_raw_pwm(){_raw_pwm=true;};
-    void disable_raw_pwm(){_raw_pwm=true;};
+    void disable_raw_pwm(){_raw_pwm=false;};
 
 protected:
 
